@@ -54,6 +54,23 @@ Le traitement de documents contractuels exige une attention particulière à la 
 - ajouter des tests sur l'isolation des données et la traçabilité ;
 - mettre en place l'observabilité et un déploiement de démonstration.
 
+## Critères d'acceptation du premier prototype
+
+Le premier jalon pourra être considéré comme démontrable lorsque les conditions suivantes seront vérifiées :
+
+- un corpus composé uniquement de contrats synthétiques ou librement publiables peut être ingéré de manière reproductible ;
+- chaque passage indexé conserve l'identifiant du document et sa position dans la source ;
+- chaque réponse générée cite les passages qui la justifient ;
+- le système signale explicitement l'absence de preuve suffisante au lieu d'inventer une réponse ;
+- des tests automatisés confirment qu'un utilisateur ne peut pas consulter les documents d'un autre espace ;
+- les opérations d'import, de consultation et de suppression sont inscrites dans un journal d'audit ;
+- les journaux techniques ne contiennent ni texte contractuel complet, ni secret, ni jeton d'accès ;
+- une procédure locale documentée permet de lancer et d'arrêter tous les services.
+
+## Données de démonstration
+
+Aucun contrat réel ou confidentiel ne doit être ajouté au dépôt. Les exemples, tests et démonstrations devront utiliser des documents synthétiques, anonymisés ou explicitement publics. Les originaux et les exports contenant des données sensibles devront rester dans un stockage contrôlé, hors de Git.
+
 ## Limites
 
 ContractOpsRAG est un outil d'assistance envisagé, pas un service de conseil juridique. Toute analyse produite devra être vérifiée par une personne qualifiée avant de guider une décision contractuelle.
