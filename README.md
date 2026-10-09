@@ -34,6 +34,23 @@ ContractOpsRAG est un projet de copilote contractuel dédié aux contrats franç
 4. Générer une réponse accompagnée de citations vérifiables.
 5. Comparer deux versions et présenter les changements de clauses.
 
+## Traçabilité minimale des citations
+
+Chaque passage indexé devra conserver suffisamment de métadonnées pour retrouver précisément sa source et vérifier une réponse :
+
+| Champ | Utilité |
+| --- | --- |
+| `document_id` | Identifiant stable du contrat |
+| `version_id` | Version exacte ayant servi à la réponse |
+| `source_name` | Nom de fichier ou référence lisible de la source |
+| `page_number` | Page d'origine lorsqu'elle est disponible |
+| `char_start` / `char_end` | Position du passage dans le texte extrait |
+| `excerpt` | Extrait effectivement présenté comme preuve |
+| `content_hash` | Contrôle d'intégrité du contenu indexé |
+| `retrieval_score` | Score utilisé pour classer le passage |
+
+L'extrait cité devra provenir directement de la version indexée, et l'interface devra permettre de revenir au passage correspondant. Une réindexation ne devra pas écraser les références historiques utilisées par des réponses déjà enregistrées.
+
 ## Principes de sécurité
 
 Le traitement de documents contractuels exige une attention particulière à la confidentialité. L'implémentation devra notamment prévoir :
