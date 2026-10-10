@@ -62,6 +62,20 @@ Le traitement de documents contractuels exige une attention particulière à la 
 - une politique de conservation et de suppression des données ;
 - la validation des citations avant toute utilisation opérationnelle.
 
+## Risques propres au pipeline RAG
+
+Les contrats importés devront être traités comme des contenus non fiables. Une instruction présente dans un document constitue une donnée à analyser et ne doit jamais modifier les règles du système, les autorisations ou le comportement des outils.
+
+Les contrôles suivants devront être appliqués dès le premier prototype :
+
+- filtrer les documents autorisés avant la recherche vectorielle, et non après la génération ;
+- propager l'identifiant de l'organisation et les droits d'accès à chaque passage indexé ;
+- isoler et délimiter clairement les extraits transmis au modèle ;
+- refuser toute réponse lorsque les passages autorisés ne fournissent pas de preuve suffisante ;
+- valider les types, la taille et le contenu des fichiers avant leur indexation ;
+- tester des documents adversariaux contenant de fausses instructions, des demandes d'exfiltration ou des références trompeuses ;
+- vérifier qu'une citation prouve la réponse sans révéler un document inaccessible à l'utilisateur.
+
 ## Feuille de route initiale
 
 - définir les formats de documents pris en charge ;
