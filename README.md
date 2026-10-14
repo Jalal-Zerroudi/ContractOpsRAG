@@ -85,6 +85,24 @@ Les contrôles suivants devront être appliqués dès le premier prototype :
 - ajouter des tests sur l'isolation des données et la traçabilité ;
 - mettre en place l'observabilité et un déploiement de démonstration.
 
+## Protocole d'évaluation
+
+Le prototype devra être évalué sur un jeu de questions versionné, construit uniquement à partir des contrats de démonstration. Chaque exemple devra contenir la question, la réponse attendue ou le statut `sans_reponse`, les passages de référence et l'espace documentaire autorisé.
+
+Pour éviter d'ajuster le système sur ses propres résultats, les questions seront séparées en ensembles de développement et de test. La version du corpus, les paramètres de découpage, le modèle d'embedding, la configuration de recherche et le modèle génératif devront être enregistrés avec chaque exécution.
+
+| Dimension | Mesure | Objectif du contrôle |
+| --- | --- | --- |
+| Recherche | `Recall@k` | Vérifier qu'au moins un passage de référence figure parmi les `k` premiers résultats |
+| Classement | `MRR` | Mesurer la position du premier passage pertinent |
+| Citations | Précision des citations | Vérifier que chaque extrait cité soutient réellement l'affirmation associée |
+| Fidélité | Taux de réponses entièrement étayées | Compter les réponses dont toutes les affirmations importantes sont couvertes par une preuve |
+| Abstention | Précision et rappel sur `sans_reponse` | Mesurer les refus corrects et les réponses injustifiées |
+| Isolation | Tests de fuite inter-espace | Exiger zéro passage ou citation provenant d'un espace non autorisé |
+| Performance | Latence `p50` et `p95` | Suivre le temps de réponse typique et les cas lents |
+
+Les résultats devront être comparés à une baseline simple de recherche lexicale. Toute régression sur l'isolation des données ou la validité des citations sera bloquante, même si les scores de recherche ou la latence s'améliorent.
+
 ## Critères d'acceptation du premier prototype
 
 Le premier jalon pourra être considéré comme démontrable lorsque les conditions suivantes seront vérifiées :
