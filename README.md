@@ -85,6 +85,24 @@ Les contrôles suivants devront être appliqués dès le premier prototype :
 - ajouter des tests sur l'isolation des données et la traçabilité ;
 - mettre en place l'observabilité et un déploiement de démonstration.
 
+
+## Règles de comparaison et de redlining
+
+La comparaison devra recevoir deux identifiants de version immuables appartenant au même dossier contractuel. Elle ne devra jamais modifier les textes sources.
+
+Chaque clause sera classée avec un statut explicite : `inchangée`, `ajoutée`, `supprimée`, `modifiée` ou `déplacée`. L'alignement utilisera en priorité un identifiant stable, puis la numérotation, le titre et la similarité du texte. Une correspondance incertaine restera visible au lieu d'être fusionnée automatiquement.
+
+| Champ de sortie | Rôle |
+| --- | --- |
+| `source_clause_id` / `target_clause_id` | Références des clauses comparées, avec une valeur absente pour un ajout ou une suppression |
+| `change_type` | Type de changement parmi les cinq statuts définis |
+| `source_text` / `target_text` | Textes exacts des deux versions |
+| `diff` | Segments ajoutés et supprimés sans reformulation générative |
+| `alignment_confidence` | Niveau de confiance de la correspondance |
+| `review_status` | État `à_valider`, `validé` ou `rejeté` et identité du réviseur |
+
+Les correspondances sous le seuil de confiance, les déplacements ambigus et toute suggestion de reformulation devront être validés par un humain. Les explications du modèle resteront séparées du diff déterministe afin qu'une interprétation générée ne puisse pas être présentée comme une modification réellement observée.
+
 ## Protocole d'évaluation
 
 Le prototype devra être évalué sur un jeu de questions versionné, construit uniquement à partir des contrats de démonstration. Chaque exemple devra contenir la question, la réponse attendue ou le statut `sans_reponse`, les passages de référence et l'espace documentaire autorisé.
