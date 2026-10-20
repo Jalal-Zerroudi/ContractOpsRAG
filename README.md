@@ -51,6 +51,20 @@ Chaque passage indexé devra conserver suffisamment de métadonnées pour retrou
 
 L'extrait cité devra provenir directement de la version indexée, et l'interface devra permettre de revenir au passage correspondant. Une réindexation ne devra pas écraser les références historiques utilisées par des réponses déjà enregistrées.
 
+### Conventions de localisation et d'intégrité
+
+Pour le prototype, `page_number` commencera à 1 et sera absent si le format source
+ne fournit pas de pages. Les positions `char_start` et `char_end` désigneront un
+intervalle semi-ouvert `[début, fin)`, compté en points de code Unicode dans le
+texte extrait complet de la version, et non en octets du PDF ou en unités UTF-16.
+
+Le texte extrait de référence sera conservé sans modification après indexation.
+`content_hash` sera le SHA-256 hexadécimal de ce texte complet encodé en UTF-8,
+sans normalisation supplémentaire au moment de la vérification. L'extrait devra
+être exactement égal à la tranche désignée par les positions. Un changement de
+texte extrait imposera une nouvelle version ; un hash ou un extrait incohérent
+bloquera la validation de la citation plutôt que de déplacer silencieusement ses positions.
+
 ## Principes de sécurité
 
 Le traitement de documents contractuels exige une attention particulière à la confidentialité. L'implémentation devra notamment prévoir :
