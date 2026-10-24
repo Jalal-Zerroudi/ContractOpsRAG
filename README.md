@@ -90,6 +90,40 @@ Les contrôles suivants devront être appliqués dès le premier prototype :
 - tester des documents adversariaux contenant de fausses instructions, des demandes d'exfiltration ou des références trompeuses ;
 - vérifier qu'une citation prouve la réponse sans révéler un document inaccessible à l'utilisateur.
 
+## Cycle de suppression et de désindexation
+
+La suppression d'un contrat devra rendre immédiatement toutes ses versions
+indisponibles à la recherche, même si la purge physique s'exécute ensuite de
+manière asynchrone. Une demande autorisée créera d'abord un état logique
+`suppression_en_cours` bloquant toute nouvelle récupération ou citation.
+
+La purge devra couvrir l'ensemble des dérivés liés au document :
+
+- fichier original et versions importées ;
+- texte extrait, clauses et passages découpés ;
+- embeddings et entrées de l'index vectoriel ;
+- caches de recherche ou de génération ;
+- brouillons, exports et pièces temporaires ;
+- liens de téléchargement ou URL signées encore actives.
+
+Les réponses historiques ne devront pas conserver silencieusement le texte d'un
+document supprimé. Selon la politique de conservation applicable, elles seront
+supprimées ou réduites à des métadonnées non sensibles indiquant que leur source
+n'est plus disponible. Le journal d'audit pourra conserver l'identifiant, le
+demandeur, le motif, les horodatages et le résultat de la purge, mais pas le
+contenu contractuel effacé.
+
+Chaque opération devra produire un rapport de suppression avec le nombre
+d'éléments attendus et effectivement supprimés par stockage. L'état final ne
+deviendra `supprimé` qu'après vérification de l'absence du document dans le
+stockage principal, l'index vectoriel et les caches. Un échec partiel restera
+visible, bloquera toute réindexation avec le même `version_id` et déclenchera
+une reprise contrôlée.
+
+Les tests devront démontrer qu'un document supprimé ne peut plus être retrouvé
+par identifiant, recherche lexicale, recherche vectorielle, citation existante
+ou cache, tout en confirmant que les documents d'autres espaces restent intacts.
+
 ## Feuille de route initiale
 
 - définir les formats de documents pris en charge ;
