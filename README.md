@@ -90,6 +90,47 @@ Les contrôles suivants devront être appliqués dès le premier prototype :
 - tester des documents adversariaux contenant de fausses instructions, des demandes d'exfiltration ou des références trompeuses ;
 - vérifier qu'une citation prouve la réponse sans révéler un document inaccessible à l'utilisateur.
 
+## Cycle d'ingestion et de versionnage
+
+Chaque import devra créer une version immuable rattachée à un document et à un
+espace documentaire. Remplacer un fichier existant créera un nouveau
+`version_id` ; aucune réindexation ne modifiera silencieusement une version
+déjà citée.
+
+| État | Signification |
+| --- | --- |
+| `reçue` | Fichier accepté, contrôles de taille et de type terminés |
+| `extraction_en_cours` | Texte et structure en cours d'extraction |
+| `indexation_en_cours` | Passages et embeddings en cours de création |
+| `indexée` | Version publiée et accessible à la recherche |
+| `échec` | Import interrompu, avec étape et erreur consultables |
+| `suppression_en_cours` / `supprimée` | Version bloquée puis purgée selon le cycle décrit ci-dessous |
+
+Une version ne deviendra `indexée` qu'après validation conjointe du texte
+extrait, des positions de passages, du `content_hash` et du nombre d'entrées
+écrites dans l'index vectoriel. Avant cette transition, aucun passage de la
+version ne devra être visible par la recherche. La publication devra être
+atomique : soit tous les passages validés deviennent accessibles, soit aucun.
+
+L'import acceptera une clé d'idempotence liée à l'espace documentaire. Répéter
+la même requête avec la même clé et le même contenu retournera la version déjà
+créée ; réutiliser cette clé avec un contenu différent sera rejeté. Le hash du
+fichier original et la configuration d'extraction seront enregistrés afin de
+distinguer un doublon exact d'une nouvelle version.
+
+En cas d'échec, les artefacts partiels (texte, passages, embeddings et fichiers
+temporaires) seront supprimés ou marqués comme non publiés. Une reprise
+contrôlée pourra réutiliser le fichier original, mais créera une nouvelle
+tentative traçable sans masquer l'erreur précédente.
+
+Les tests d'intégration devront vérifier au minimum :
+
+- qu'une version partiellement indexée n'apparaît jamais dans les résultats ;
+- que deux imports identiques avec la même clé ne créent pas deux versions ;
+- qu'une même clé associée à un contenu différent est refusée ;
+- qu'une nouvelle version ne modifie ni les citations ni les hashes historiques ;
+- qu'un échec nettoie les artefacts partiels sans toucher aux autres espaces.
+
 ## Cycle de suppression et de désindexation
 
 La suppression d'un contrat devra rendre immédiatement toutes ses versions
