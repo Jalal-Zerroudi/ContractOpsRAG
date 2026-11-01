@@ -76,6 +76,41 @@ Le traitement de documents contractuels exige une attention particulière à la 
 - une politique de conservation et de suppression des données ;
 - la validation des citations avant toute utilisation opérationnelle.
 
+## Modèle minimal d'autorisation
+
+L'autorisation devra être évaluée côté serveur à partir de l'identité authentifiée,
+de l'espace documentaire et de l'action demandée. Un identifiant d'organisation
+ou un rôle fourni uniquement dans le corps de la requête ne constitue jamais une
+preuve d'accès.
+
+| Rôle | Lire et rechercher | Importer une version | Valider un résultat | Supprimer un document | Gérer les membres |
+| --- | --- | --- | --- | --- | --- |
+| `lecteur` | oui, dans son espace | non | non | non | non |
+| `contributeur` | oui, dans son espace | oui | non | non | non |
+| `réviseur` | oui, dans son espace | non | oui | non | non |
+| `administrateur_espace` | oui, dans son espace | oui | oui | oui, avec confirmation | oui |
+| `service_ingestion` | non interactif | oui, via une identité technique dédiée | non | non | non |
+
+Cette matrice constitue un minimum : une organisation pourra restreindre davantage
+les droits par dossier ou document, mais aucun rôle ne devra obtenir implicitement
+un accès à un autre espace. Les contrôles suivants seront obligatoires :
+
+- refuser par défaut toute action absente de la politique et vérifier l'autorisation
+  à chaque requête, tâche asynchrone et reprise ;
+- filtrer les documents autorisés avant la recherche lexicale ou vectorielle ;
+- propager `workspace_id`, l'identité du sujet et la version de la politique dans
+  les travaux en arrière-plan, sans accepter leur remplacement par le client ;
+- inclure l'espace et une version des droits dans les clés de cache, puis invalider
+  les résultats et liens temporaires lorsqu'un accès est retiré ;
+- séparer les identités techniques des comptes humains et leur accorder uniquement
+  les permissions requises pour une tâche déterminée ;
+- journaliser les décisions d'autorisation accordées ou refusées sans enregistrer
+  le texte contractuel, les jetons ou les secrets.
+
+Les tests devront couvrir au minimum la lecture inter-espace refusée, l'élévation
+de rôle par paramètre client, la révocation d'un membre, un cache créé avant la
+révocation et une tâche d'ingestion tentant d'accéder à un autre espace.
+
 ## Risques propres au pipeline RAG
 
 Les contrats importés devront être traités comme des contenus non fiables. Une instruction présente dans un document constitue une donnée à analyser et ne doit jamais modifier les règles du système, les autorisations ou le comportement des outils.
