@@ -125,6 +125,22 @@ Les contrôles suivants devront être appliqués dès le premier prototype :
 - tester des documents adversariaux contenant de fausses instructions, des demandes d'exfiltration ou des références trompeuses ;
 - vérifier qu'une citation prouve la réponse sans révéler un document inaccessible à l'utilisateur.
 
+## Sécurité des fichiers importés
+
+L'import d'un contrat doit être traité comme une frontière de sécurité distincte du pipeline RAG. Un fichier reste en quarantaine tant que tous les contrôles ci-dessous ne sont pas terminés ; son nom, son extension et le type MIME annoncé par le client ne suffisent jamais à l'autoriser.
+
+- maintenir une liste blanche versionnée de formats acceptés et vérifier la signature binaire ainsi que la structure réelle du document ;
+- imposer des limites sur la taille du fichier, le nombre de pages, le nombre d'entrées d'une archive et sa taille décompressée ;
+- refuser les fichiers chiffrés, les archives récursives, les chemins traversant des répertoires et tout dépassement de limite ;
+- exécuter une analyse antimalware avant l'extraction, puis consigner dans l'audit la version de l'outil et l'empreinte du fichier ;
+- isoler l'OCR, la conversion et le parsing sans accès réseau sortant, avec des limites de temps, de mémoire, de CPU et d'espace disque ;
+- ne jamais exécuter les macros, scripts, objets embarqués, liens externes ou autres contenus actifs ;
+- chiffrer le document en transit et au repos, puis supprimer les fichiers temporaires à la fin du traitement.
+
+Un fichier refusé ne produit aucun texte indexable ni embedding. L'API retourne au client un message générique et un code d'erreur stable, tandis que le journal d'audit conserve le motif technique sans recopier le contenu du contrat.
+
+Les tests d'acceptation couvrent au minimum une fausse extension, un fichier tronqué, une archive avec traversée de chemin, une archive surdimensionnée, un contenu actif et un dépassement de délai du parseur.
+
 ## Cycle d'ingestion et de versionnage
 
 Chaque import devra créer une version immuable rattachée à un document et à un
