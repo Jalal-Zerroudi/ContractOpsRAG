@@ -125,6 +125,37 @@ Les contrôles suivants devront être appliqués dès le premier prototype :
 - tester des documents adversariaux contenant de fausses instructions, des demandes d'exfiltration ou des références trompeuses ;
 - vérifier qu'une citation prouve la réponse sans révéler un document inaccessible à l'utilisateur.
 
+## Frontière de confiance des modèles et fournisseurs
+
+Les services d'embedding, de reranking et de génération sont des destinataires
+potentiels de données contractuelles. Avant d'activer un fournisseur externe,
+l'architecture devra documenter précisément quelles données quittent la plateforme,
+dans quelle région elles sont traitées et pendant combien de temps elles sont
+conservées. Un fournisseur non approuvé ou une clé API fournie par le client ne
+devra jamais recevoir automatiquement un document ou un passage.
+
+Les contrôles minimaux seront les suivants :
+
+- maintenir une liste blanche versionnée des fournisseurs, modèles, régions et
+  usages autorisés pour chaque espace documentaire ;
+- désactiver l'entraînement sur les données envoyées et obtenir des garanties
+  contractuelles sur la rétention, les sous-traitants et la suppression ;
+- transmettre uniquement les passages nécessaires, après suppression des
+  métadonnées et identifiants qui ne sont pas utiles à la tâche ;
+- appliquer les mêmes règles aux embeddings, rerankers, modèles de génération,
+  outils d'observabilité et mécanismes de secours ;
+- interdire les appels sortants lorsqu'un espace exige un traitement local ou
+  lorsqu'aucun fournisseur compatible avec sa politique n'est disponible ;
+- isoler les clés par environnement et fournisseur, limiter leurs droits, les
+  conserver hors des journaux et prévoir leur rotation ;
+- journaliser le fournisseur, le modèle, la région, la politique appliquée et les
+  identifiants des passages transmis, sans recopier leur contenu.
+
+L'interface devra indiquer clairement lorsqu'une opération utilise un service
+externe. Les tests devront vérifier qu'un espace configuré en traitement local ne
+génère aucun appel sortant, qu'un fournisseur non autorisé est refusé et qu'un
+mécanisme de repli ne contourne jamais la politique de l'espace.
+
 ## Sécurité des fichiers importés
 
 L'import d'un contrat doit être traité comme une frontière de sécurité distincte du pipeline RAG. Un fichier reste en quarantaine tant que tous les contrôles ci-dessous ne sont pas terminés ; son nom, son extension et le type MIME annoncé par le client ne suffisent jamais à l'autoriser.
