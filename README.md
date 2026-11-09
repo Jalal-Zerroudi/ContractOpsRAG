@@ -247,6 +247,33 @@ Les tests devront démontrer qu'un document supprimé ne peut plus être retrouv
 par identifiant, recherche lexicale, recherche vectorielle, citation existante
 ou cache, tout en confirmant que les documents d'autres espaces restent intacts.
 
+## Sauvegarde, restauration et reprise après incident
+
+Les sauvegardes devront couvrir de manière cohérente les métadonnées PostgreSQL,
+les fichiers sources et les index de recherche. Une sauvegarde partielle ou prise
+à des instants incompatibles ne devra pas être annoncée comme restaurable. Les
+objectifs de perte de données (`RPO`) et de délai de reprise (`RTO`) seront définis
+par environnement avant l'hébergement de documents réels.
+
+Les contrôles minimaux seront les suivants :
+
+- chiffrer les sauvegardes avec des clés distinctes des données actives et limiter
+  les identités autorisées à les créer, les lire ou les restaurer ;
+- conserver un manifeste horodaté avec les versions de schéma, les empreintes des
+  artefacts et les points de cohérence entre base, stockage objet et index ;
+- restaurer d'abord dans un environnement isolé, sans appel sortant vers un modèle
+  ni notification utilisateur, puis valider l'intégrité avant toute remise en service ;
+- rejouer les révocations d'accès et les tombstones de suppression postérieurs au
+  point restauré afin qu'un contrat supprimé ne réapparaisse jamais dans la recherche ;
+- journaliser chaque sauvegarde et restauration sans inclure le contenu contractuel,
+  puis tester régulièrement la procédure plutôt que de se fier à la seule création des archives.
+
+Un exercice de restauration devra vérifier qu'une version non supprimée retrouve
+son `content_hash`, ses passages et ses citations, que les documents supprimés
+restent introuvables, que l'isolation entre espaces est conservée et que les caches
+ou URL signées antérieurs ne sont pas réactivés. Tout écart laissera l'environnement
+restauré hors service jusqu'à correction ou nouvelle restauration.
+
 ## Feuille de route initiale
 
 - définir les formats de documents pris en charge ;
