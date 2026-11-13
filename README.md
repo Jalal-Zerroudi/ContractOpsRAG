@@ -4,6 +4,14 @@ ContractOpsRAG est un projet de copilote contractuel dédié aux contrats franç
 
 > **Statut du dépôt :** ce dépôt présente actuellement le concept et l'architecture cible. Aucun code exécutable ni procédure de déploiement n'est encore versionné.
 
+## Navigation
+
+- **Découvrir le projet :** [fonctionnalités prévues](#fonctionnalités-prévues), [architecture cible](#architecture-cible) et [parcours fonctionnel](#parcours-fonctionnel-envisagé).
+- **Concevoir les données et l'accès :** [traçabilité des citations](#traçabilité-minimale-des-citations), [autorisation](#modèle-minimal-dautorisation), [ingestion et versionnage](#cycle-dingestion-et-de-versionnage) et [suppression](#cycle-de-suppression-et-de-désindexation).
+- **Sécuriser l'exploitation :** [principes de sécurité](#principes-de-sécurité), [risques du pipeline RAG](#risques-propres-au-pipeline-rag), [fournisseurs de modèles](#frontière-de-confiance-des-modèles-et-fournisseurs), [fichiers importés](#sécurité-des-fichiers-importés) et [reprise après incident](#sauvegarde-restauration-et-reprise-après-incident).
+- **Valider le produit :** [comparaison et redlining](#règles-de-comparaison-et-de-redlining), [protocole d'évaluation](#protocole-dévaluation) et [critères d'acceptation](#critères-dacceptation-du-premier-prototype).
+- **Planifier et cadrer :** [feuille de route](#feuille-de-route-initiale), [données de démonstration](#données-de-démonstration) et [limites](#limites).
+
 ## Fonctionnalités prévues
 
 - questions-réponses sur des contrats avec citations des passages sources ;
