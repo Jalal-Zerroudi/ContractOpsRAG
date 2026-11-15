@@ -7,7 +7,7 @@ ContractOpsRAG est un projet de copilote contractuel dédié aux contrats franç
 ## Navigation
 
 - **Découvrir le projet :** [fonctionnalités prévues](#fonctionnalités-prévues), [architecture cible](#architecture-cible) et [parcours fonctionnel](#parcours-fonctionnel-envisagé).
-- **Concevoir les données et l'accès :** [traçabilité des citations](#traçabilité-minimale-des-citations), [autorisation](#modèle-minimal-dautorisation), [ingestion et versionnage](#cycle-dingestion-et-de-versionnage) et [suppression](#cycle-de-suppression-et-de-désindexation).
+- **Concevoir les données et l'accès :** [traçabilité des citations](#traçabilité-minimale-des-citations), [autorisation](#modèle-minimal-dautorisation), [journal d'audit](#journal-daudit-minimal), [ingestion et versionnage](#cycle-dingestion-et-de-versionnage) et [suppression](#cycle-de-suppression-et-de-désindexation).
 - **Sécuriser l'exploitation :** [principes de sécurité](#principes-de-sécurité), [risques du pipeline RAG](#risques-propres-au-pipeline-rag), [fournisseurs de modèles](#frontière-de-confiance-des-modèles-et-fournisseurs), [fichiers importés](#sécurité-des-fichiers-importés) et [reprise après incident](#sauvegarde-restauration-et-reprise-après-incident).
 - **Valider le produit :** [comparaison et redlining](#règles-de-comparaison-et-de-redlining), [protocole d'évaluation](#protocole-dévaluation) et [critères d'acceptation](#critères-dacceptation-du-premier-prototype).
 - **Planifier et cadrer :** [feuille de route](#feuille-de-route-initiale), [données de démonstration](#données-de-démonstration) et [limites](#limites).
@@ -118,6 +118,44 @@ un accès à un autre espace. Les contrôles suivants seront obligatoires :
 Les tests devront couvrir au minimum la lecture inter-espace refusée, l'élévation
 de rôle par paramètre client, la révocation d'un membre, un cache créé avant la
 révocation et une tâche d'ingestion tentant d'accéder à un autre espace.
+
+## Journal d'audit minimal
+
+Chaque action sensible devra produire un événement d'audit structuré, horodaté en
+UTC et rattaché à la même corrélation que la requête ou la tâche asynchrone. Un
+événement enregistré sera immuable ; une correction créera un nouvel événement
+au lieu de modifier l'historique.
+
+| Champ | Contenu attendu |
+| --- | --- |
+| `event_id` | Identifiant unique et non réutilisable |
+| `occurred_at` | Horodatage UTC avec une précision suffisante pour ordonner les événements |
+| `actor_type` / `actor_id` | Utilisateur, service ou tâche ayant initié l'action, avec un identifiant opaque |
+| `workspace_id` | Espace documentaire concerné, déterminé côté serveur |
+| `action` | Nom stable de l'opération, par exemple `document.read`, `version.import` ou `member.role_changed` |
+| `resource_type` / `resource_id` | Ressource ciblée sans recopier son contenu |
+| `decision` / `reason_code` | Autorisation accordée ou refusée et motif machine stable |
+| `outcome` | Résultat `success`, `failure` ou `partial`, avec un code d'erreur non sensible |
+| `request_id` / `trace_id` | Corrélation entre API, services et travaux en arrière-plan |
+| `source_service` / `policy_version` | Composant émetteur et version de la politique appliquée |
+
+Le journal ne devra contenir ni texte de contrat, ni extrait, prompt, embedding,
+secret, jeton d'accès ou corps de fichier. Les noms de fichiers et adresses réseau
+ne seront conservés que si une finalité documentée l'exige, avec minimisation et
+durée de rétention explicites. L'accès au journal sera séparé des rôles métier :
+un administrateur d'espace ne pourra pas effacer ou réécrire ses propres traces.
+
+Le stockage devra être append-only, chiffré et protégé par une politique de
+rétention. Une chaîne de hashes, une signature de lots ou un mécanisme équivalent
+permettra de détecter la suppression ou la modification d'événements. Les
+changements de rôles, suppressions, exports et restaurations seront refusés si
+leur événement d'audit ne peut pas être persisté ; les autres opérations devront
+définir explicitement leur comportement en cas d'indisponibilité du journal.
+
+Les tests vérifieront au minimum un accès accordé et refusé, la corrélation d'une
+tâche asynchrone, l'absence de contenu contractuel et de secrets, l'isolation des
+événements entre espaces, la détection d'une altération et l'application de la
+politique de rétention.
 
 ## Risques propres au pipeline RAG
 
