@@ -8,7 +8,7 @@ ContractOpsRAG est un projet de copilote contractuel dédié aux contrats franç
 
 - **Découvrir le projet :** [fonctionnalités prévues](#fonctionnalités-prévues), [architecture cible](#architecture-cible) et [parcours fonctionnel](#parcours-fonctionnel-envisagé).
 - **Concevoir les données et l'accès :** [traçabilité des citations](#traçabilité-minimale-des-citations), [autorisation](#modèle-minimal-dautorisation), [journal d'audit](#journal-daudit-minimal), [ingestion et versionnage](#cycle-dingestion-et-de-versionnage) et [suppression](#cycle-de-suppression-et-de-désindexation).
-- **Sécuriser l'exploitation :** [principes de sécurité](#principes-de-sécurité), [risques du pipeline RAG](#risques-propres-au-pipeline-rag), [fournisseurs de modèles](#frontière-de-confiance-des-modèles-et-fournisseurs), [fichiers importés](#sécurité-des-fichiers-importés) et [reprise après incident](#sauvegarde-restauration-et-reprise-après-incident).
+- **Sécuriser l'exploitation :** [principes de sécurité](#principes-de-sécurité), [observabilité et incidents](#observabilité-et-gestion-des-incidents), [risques du pipeline RAG](#risques-propres-au-pipeline-rag), [fournisseurs de modèles](#frontière-de-confiance-des-modèles-et-fournisseurs), [fichiers importés](#sécurité-des-fichiers-importés) et [reprise après incident](#sauvegarde-restauration-et-reprise-après-incident).
 - **Valider le produit :** [comparaison et redlining](#règles-de-comparaison-et-de-redlining), [protocole d'évaluation](#protocole-dévaluation) et [critères d'acceptation](#critères-dacceptation-du-premier-prototype).
 - **Planifier et cadrer :** [feuille de route](#feuille-de-route-initiale), [données de démonstration](#données-de-démonstration) et [limites](#limites).
 
@@ -156,6 +156,45 @@ Les tests vérifieront au minimum un accès accordé et refusé, la corrélation
 tâche asynchrone, l'absence de contenu contractuel et de secrets, l'isolation des
 événements entre espaces, la détection d'une altération et l'application de la
 politique de rétention.
+
+## Observabilité et gestion des incidents
+
+La télémétrie devra permettre de diagnostiquer le parcours d'une requête entre
+l'API, les tâches asynchrones, l'extraction, la recherche et les fournisseurs de
+modèles sans devenir une copie secondaire des contrats. Chaque trace conservera
+un `trace_id` généré côté serveur et propagera un `request_id` opaque ; les tâches
+en arrière-plan ajouteront leur propre `job_id`. Ces identifiants permettront de
+relier la télémétrie au journal d'audit sans y recopier ses données métier.
+
+| Signal | Informations autorisées | Informations interdites |
+| --- | --- | --- |
+| Logs | service, opération, code de résultat, durée, taille et compteurs agrégés | texte extrait, prompts, réponses, citations, jetons et secrets |
+| Traces | étapes, dépendances, statut, identifiants techniques opaques | corps HTTP, nom de fichier en clair et contenu de document |
+| Métriques | latence, débit, taux d'erreur, taille des files et saturation | identifiant utilisateur, document ou espace comme label non borné |
+
+Les erreurs devront utiliser des codes stables et des messages expurgés. Les
+exceptions d'un parseur ou d'un fournisseur externe seront filtrées avant leur
+export, car elles peuvent contenir un extrait d'entrée. L'accès aux outils
+d'observabilité sera séparé des rôles métier, limité par environnement et soumis
+à une durée de conservation documentée.
+
+Des alertes actionnables couvriront au minimum les échecs répétés d'ingestion,
+la croissance d'une file, les erreurs d'autorisation anormales, l'indisponibilité
+du journal d'audit, les suppressions incomplètes et une hausse des réponses sans
+preuve. Chaque alerte indiquera un responsable, un niveau de sévérité et une
+procédure de diagnostic. Une indisponibilité d'un fournisseur ne devra jamais
+déclencher un repli qui contourne la politique de l'espace documentaire.
+
+La procédure d'incident devra prévoir la limitation de l'impact, la révocation
+des secrets concernés, la conservation des preuves techniques, l'identification
+des espaces affectés et la vérification de la remise en service. Un retour
+d'expérience consignera la chronologie, la cause, les actions correctives et les
+tests empêchant une récidive, sans inclure de contenu contractuel.
+
+Les tests devront injecter une erreur contenant un faux secret et un extrait de
+contrat pour confirmer leur absence des logs et traces, vérifier la propagation
+de la corrélation dans une tâche asynchrone, et démontrer qu'une alerte est émise
+pour une suppression partielle ainsi que pour l'indisponibilité du journal d'audit.
 
 ## Risques propres au pipeline RAG
 
