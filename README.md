@@ -7,7 +7,7 @@ ContractOpsRAG est un projet de copilote contractuel dédié aux contrats franç
 ## Navigation
 
 - **Découvrir le projet :** [fonctionnalités prévues](#fonctionnalités-prévues), [architecture cible](#architecture-cible) et [parcours fonctionnel](#parcours-fonctionnel-envisagé).
-- **Concevoir les données et l'accès :** [traçabilité des citations](#traçabilité-minimale-des-citations), [autorisation](#modèle-minimal-dautorisation), [journal d'audit](#journal-daudit-minimal), [ingestion et versionnage](#cycle-dingestion-et-de-versionnage) et [suppression](#cycle-de-suppression-et-de-désindexation).
+- **Concevoir les données et l'accès :** [traçabilité des citations](#traçabilité-minimale-des-citations), [autorisation](#modèle-minimal-dautorisation), [journal d'audit](#journal-daudit-minimal), [ingestion et versionnage](#cycle-dingestion-et-de-versionnage), [suppression](#cycle-de-suppression-et-de-désindexation) et [conservation](#politique-de-conservation-et-dexpiration).
 - **Sécuriser l'exploitation :** [principes de sécurité](#principes-de-sécurité), [observabilité et incidents](#observabilité-et-gestion-des-incidents), [risques du pipeline RAG](#risques-propres-au-pipeline-rag), [fournisseurs de modèles](#frontière-de-confiance-des-modèles-et-fournisseurs), [fichiers importés](#sécurité-des-fichiers-importés) et [reprise après incident](#sauvegarde-restauration-et-reprise-après-incident).
 - **Valider le produit :** [comparaison et redlining](#règles-de-comparaison-et-de-redlining), [protocole d'évaluation](#protocole-dévaluation) et [critères d'acceptation](#critères-dacceptation-du-premier-prototype).
 - **Planifier et cadrer :** [feuille de route](#feuille-de-route-initiale), [données de démonstration](#données-de-démonstration) et [limites](#limites).
@@ -331,6 +331,47 @@ une reprise contrôlée.
 Les tests devront démontrer qu'un document supprimé ne peut plus être retrouvé
 par identifiant, recherche lexicale, recherche vectorielle, citation existante
 ou cache, tout en confirmant que les documents d'autres espaces restent intacts.
+
+## Politique de conservation et d'expiration
+
+Chaque espace documentaire devra appliquer une politique de conservation explicite,
+versionnée et déterminée côté serveur. Aucune durée envoyée uniquement par le client
+ne pourra prolonger la conservation d'un contrat. La politique enregistrera au minimum
+sa version, sa date d'effet, les catégories de données couvertes, leur durée et le motif
+juridique ou opérationnel associé.
+
+| Catégorie | Point de départ de la durée | Fin de conservation attendue |
+| --- | --- | --- |
+| Fichiers originaux et versions | Import ou remplacement de la version | Blocage immédiat à l'expiration, puis purge vérifiée du stockage |
+| Texte, clauses, passages et embeddings | Publication de la version indexée | Désindexation et suppression avec la version source |
+| Réponses, comparaisons et citations | Création du résultat | Suppression ou réduction à des métadonnées non sensibles selon la politique |
+| Fichiers temporaires et exports | Création de l'artefact | Expiration courte, révocation des liens et suppression automatique |
+| Journaux d'audit | Horodatage de l'événement | Rétention indépendante, immuable et limitée à la finalité d'audit |
+| Logs, traces et métriques | Émission du signal | Agrégation ou suppression selon la politique d'observabilité |
+| Sauvegardes | Création du point de sauvegarde | Expiration du jeu de sauvegarde et destruction de ses clés si applicable |
+
+Une expiration logique devra retirer immédiatement le contenu de la recherche, du
+RAG, des caches et des nouveaux exports, même si la purge physique est asynchrone.
+Chaque purge produira un rapport par stockage et restera en échec tant qu'un dérivé
+attendu subsiste. Les tâches de nettoyage seront idempotentes et reprendront après
+une interruption sans restaurer l'accès au document.
+
+Une obligation de conservation ou un gel juridique pourra suspendre la purge, mais
+devra être autorisé, daté, motivé, limité au périmètre nécessaire et inscrit dans le
+journal d'audit. Le gel ne devra pas rendre le contenu consultable par un utilisateur
+qui a perdu ses droits. Sa levée relancera l'expiration à partir de la politique
+applicable, sans modifier silencieusement l'historique.
+
+Les sauvegardes devront recevoir les mêmes tombstones de suppression et les mêmes
+gels juridiques que les données actives. Une restauration rejouera ces événements
+avant toute remise en service afin qu'une donnée expirée ou supprimée ne réapparaisse
+pas. Toute modification de politique devra être testée sur un environnement isolé
+et ne pourra raccourcir une conservation réglementaire obligatoire.
+
+Les tests devront vérifier au minimum l'expiration d'une version et de tous ses
+dérivés, l'invalidation des caches et liens temporaires, la reprise d'une purge
+interrompue, l'isolation entre espaces, le maintien d'un gel juridique et l'absence
+de réapparition après restauration.
 
 ## Sauvegarde, restauration et reprise après incident
 
