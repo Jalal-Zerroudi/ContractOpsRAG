@@ -7,7 +7,7 @@ ContractOpsRAG est un projet de copilote contractuel dédié aux contrats franç
 ## Navigation
 
 - **Découvrir le projet :** [fonctionnalités prévues](#fonctionnalités-prévues), [architecture cible](#architecture-cible) et [parcours fonctionnel](#parcours-fonctionnel-envisagé).
-- **Concevoir les données et l'accès :** [traçabilité des citations](#traçabilité-minimale-des-citations), [autorisation](#modèle-minimal-dautorisation), [journal d'audit](#journal-daudit-minimal), [ingestion et versionnage](#cycle-dingestion-et-de-versionnage), [suppression](#cycle-de-suppression-et-de-désindexation) et [conservation](#politique-de-conservation-et-dexpiration).
+- **Concevoir les données et l'accès :** [modèle conceptuel](#modèle-conceptuel-minimal), [traçabilité des citations](#traçabilité-minimale-des-citations), [autorisation](#modèle-minimal-dautorisation), [journal d'audit](#journal-daudit-minimal), [ingestion et versionnage](#cycle-dingestion-et-de-versionnage), [suppression](#cycle-de-suppression-et-de-désindexation) et [conservation](#politique-de-conservation-et-dexpiration).
 - **Sécuriser l'exploitation :** [principes de sécurité](#principes-de-sécurité), [observabilité et incidents](#observabilité-et-gestion-des-incidents), [risques du pipeline RAG](#risques-propres-au-pipeline-rag), [fournisseurs de modèles](#frontière-de-confiance-des-modèles-et-fournisseurs), [fichiers importés](#sécurité-des-fichiers-importés) et [reprise après incident](#sauvegarde-restauration-et-reprise-après-incident).
 - **Valider le produit :** [comparaison et redlining](#règles-de-comparaison-et-de-redlining), [protocole d'évaluation](#protocole-dévaluation) et [critères d'acceptation](#critères-dacceptation-du-premier-prototype).
 - **Planifier et cadrer :** [feuille de route](#feuille-de-route-initiale), [données de démonstration](#données-de-démonstration) et [limites](#limites).
@@ -33,6 +33,31 @@ ContractOpsRAG est un projet de copilote contractuel dédié aux contrats franç
 | Azure Container Registry | Stockage des images de conteneurs |
 | Azure Container Apps ou AKS | Hébergement des services |
 | OpenTelemetry + Azure Monitor | Traces, métriques et supervision |
+
+## Modèle conceptuel minimal
+
+Ce modèle décrit les identités stables à préserver entre l'ingestion, la recherche, les citations et la comparaison. Il reste indépendant du schéma PostgreSQL qui sera choisi lors de l'implémentation.
+
+| Entité | Responsabilité | Invariant minimal |
+| --- | --- | --- |
+| Espace documentaire | Frontière d'isolation d'une organisation ou d'une équipe | Toute ressource métier appartient à un seul espace déterminé côté serveur |
+| Document | Identité logique durable d'un contrat | Un document conserve son identifiant lorsque de nouvelles versions sont importées |
+| Version | Représentation immuable d'un fichier importé et de son extraction | Le contenu, son hash et la configuration d'extraction ne sont jamais modifiés en place |
+| Passage | Segment indexable rattaché à une version précise | Ses positions et son texte restent vérifiables dans le texte extrait de cette version |
+| Citation | Référence utilisée pour étayer une affirmation | Elle cible un passage et une version accessibles au lecteur au moment de la réponse |
+| Réponse | Résultat généré, composé d'affirmations et de citations | Elle conserve la version de la politique et la configuration de recherche appliquées |
+| Comparaison | Analyse de deux versions d'un même document | Les deux sources restent immuables et chaque différence référence les clauses concernées |
+
+Les relations attendues sont les suivantes :
+
+- un espace possède plusieurs documents, mais aucun document ne traverse deux espaces ;
+- un document possède une ou plusieurs versions ordonnées, dont une seule peut être publiée comme version courante ;
+- une version possède des passages et leurs embeddings ; un passage ne peut pas être réutilisé par une autre version ;
+- une réponse référence uniquement les passages autorisés récupérés pour cette exécution ;
+- une comparaison relie exactement deux versions du même document et ne crée pas une nouvelle version ;
+- les suppressions, expirations et gels juridiques ciblent ces identifiants stables afin d'atteindre tous leurs dérivés sans ambiguïté.
+
+Les clés techniques devront être opaques et non dérivées d'un nom de fichier, d'une adresse utilisateur ou du texte du contrat. Les contraintes d'unicité incluront l'espace documentaire afin d'empêcher qu'un identifiant fourni par un client ne sélectionne une ressource d'un autre espace.
 
 ## Parcours fonctionnel envisagé
 
